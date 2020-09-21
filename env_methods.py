@@ -30,7 +30,7 @@ def convert_datetime(val, tus):
 
 
 #acquire data between start and end data, return as dict 
-def get_data(directory, all_data, time_b):
+def get_data(directory, all_data, time_b=[0,0,0,0]):
   
     files = os.listdir(directory)
         

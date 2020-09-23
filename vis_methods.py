@@ -1,6 +1,3 @@
-"""
-This code was written by Brynnydd Hamilton and was copied into this project with her permission
-"""
 
 import matplotlib.pyplot as plt 
 import cartopy 
@@ -8,128 +5,101 @@ import cartopy.crs as ccrs
 import env_methods as em 
 import numpy as np 
 import geopandas as gpd
+import math
 
-def height_anomaly_plot(lat_start, lat_end, lon_start, lon_end,lat, lon, pres_levels, lev_x, data_package, title_str):
-   
-    lat1 = em.find_closest_val(lat_start, lat)
-    lat2 = em.find_closest_val(lat_end, lat)
-    lon1 = em.find_closest_val(lon_start, lon)
-    lon2 = em.find_closest_val(lon_end, lon)
-
-    lev_x = em.find_closest_val(lev_x, pres_levels)
-    
-    fig = plt.figure(figsize = (12,4))
-    ax = plt.subplot(projection = ccrs.PlateCarree())
-
+#This is a basic method to plot a given 2d numpy array of scalar data, along with it's associated latitude and longitude values.
+#Optional parameters to limit the visualization to a rectangle with minimum and maximum longitude and latitude values
+def plot_data(lon, lat, data, scalebar, title, lon_min = 0, lon_max = 359, lat_min = -90, lat_max = 90, has_scale_bounds = False, scale_min = 0, scale_max = 0): 
+    fig = plt.figure(figsize = (20, 15))
+    ax = plt.axes(projection = ccrs.PlateCarree(central_longitude = 0))
     ax.coastlines()
+    ax.add_feature(cartopy.feature.LAKES, alpha=1)
+    ax.add_feature(cartopy.feature.RIVERS, alpha = 1)
+    
+    lat1 = em.find_closest_val(lat_min, lat)
+    lat2 = em.find_closest_val(lat_max, lat)
+    
+    ax.set_extent((lon_min, lon_max, lat_min, lat_max))
+    ax.set_xticks(lon[math.ceil(lon_min / 10) * 10:lon_max][::10], crs = ccrs.PlateCarree())
+    ax.set_yticks(lat[math.ceil(lat1 / 10) * 10:lat2][::10], crs = ccrs.PlateCarree())
+    plt.xlabel('lon')
+    plt.ylabel('lat')
+    plt.title(title)
+    
+    if not has_scale_bounds:
+        mesh = plt.pcolormesh(lon[lon_min:lon_max], 
+                              lat[lat1:lat2], 
+                              data[lat1:lat2, lon_min:lon_max], 
+                              cmap="coolwarm")
+    else:
+        mesh = plt.pcolormesh(lon[lon_min:lon_max], 
+                              lat[lat1:lat2], 
+                              data[lat1:lat2, lon_min:lon_max], 
+                              cmap="coolwarm", vmin = scale_min, vmax = scale_max)
+    cbar = plt.colorbar(mesh)
+    cbar.set_label(scalebar)
 
-    ax.set_xticks(np.asarray(lon[::4]) - 180)
-    ax.set_yticks(np.asarray(lat[::3]))
-    ax.set_xlabel('lon')
-    ax.set_ylabel('lat')
-    mesh = plt.pcolormesh(lon[lon1:lon2], lat[lat1:lat2], data_package['hgt'][lev_x, lat1:lat2, lon1:lon2],
-                    cmap = 'coolwarm', vmin = -1, vmax = 1)
-    #plt.contour(lon[lon1:lon2], lat[lat1:lat2], data_package['hgt'][lev_x, lat1:lat2, lon1:lon2],
-    #            cmap = 'coolwarm')
-    
-    cb = plt.colorbar(mesh)
-    # ax.clabel(cont, inline=1, fontsize=5, colors = 'black')
-    cb.set_label('stdev from mean')
-    
-    ax.set_title(title_str)
-    
-    ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
-    ax.add_feature(cartopy.feature.LAKES, alpha=0.5)
-    ax.add_feature(cartopy.feature.RIVERS)
-    
-    return fig 
-def average_plot(lat_start, lat_end, lon_start, lon_end, lat, lon, pres_levels, lev_x, data_package, title_str):
-   
-    lat1 = em.find_closest_val(lat_start, lat)
-    lat2 = em.find_closest_val(lat_end, lat)
-    lon1 = em.find_closest_val(lon_start, lon)
-    lon2 = em.find_closest_val(lon_end, lon)
-
-    lev_x = em.find_closest_val(lev_x, pres_levels)
-    
-    fig = plt.figure(figsize = (12,4))
-    ax = plt.subplot(projection = ccrs.PlateCarree())
-
+#This is a basic method to plot a given collection of vector data (with the x and y componenets given separately) along with associated
+#lat and lon values. Optional parameters to limit bounds of visualization, the scale of the vectors, and, since these plot can get
+#messy, how many degrees should separate the vectors
+def plot_vector_data(lon, lat, x_data, y_data, title, scale_title, 
+                     lon_min = 0, lon_max = 359, lat_min = -90, lat_max = 90, detail=3, v_scale = 400):
+    fig = plt.figure(figsize = (20, 15))
+    ax = plt.axes(projection = ccrs.PlateCarree(central_longitude = 0))
     ax.coastlines()
-
-    ax.set_xticks(np.asarray(lon[::5]) - 180)
-    ax.set_yticks(np.asarray(lat[::4]))
-    ax.set_xlabel('lon')
-    ax.set_ylabel('lat')
-    mesh = plt.pcolormesh(lon[lon1:lon2], lat[lat1:lat2], data_package['hgt'][lev_x, lat1:lat2, lon1:lon2],
-                    cmap = 'coolwarm')
-    #plt.contour(lon[lon1:lon2], lat[lat1:lat2], data_package['hgt'][lev_x, lat1:lat2, lon1:lon2],
-    #            cmap = 'coolwarm')
+    ax.add_feature(cartopy.feature.LAKES, alpha=1)
+    ax.add_feature(cartopy.feature.RIVERS, alpha=1)
     
-    cb = plt.colorbar(mesh)
-    # ax.clabel(cont, inline=1, fontsize=5, colors = 'black')
-    cb.set_label('GPH at ' + str(pres_levels[lev_x]) +'mb level [m]')
-    quiv = plt.quiver(lon[lon1:lon2], lat[lat1:lat2], data_package['uwnd'][lev_x, lat1:lat2, lon1:lon2], 
-                      data_package['vwnd'][lev_x, lat1:lat2, lon1:lon2])
-    ax.quiverkey(quiv, X=0.3, Y=-0.1, U=10,
-                 label='Quiver key, length = 10 m/s', labelpos='E')
-    ax.set_title(title_str)
-
-    ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
-    ax.add_feature(cartopy.feature.LAKES, alpha=0.5)
-    ax.add_feature(cartopy.feature.RIVERS)
+    lat1 = em.find_closest_val(lat_min, lat)
+    lat2 = em.find_closest_val(lat_max, lat)
     
-    return fig
-
-def sst_anomaly_plot(lat_start, lat_end, lon_start, lon_end, lat, lon, data_package, title_str, max_at_one):
-   
-    lat1 = em.find_closest_val(lat_start, lat)
-    lat2 = em.find_closest_val(lat_end, lat)
-    lon1 = em.find_closest_val(lon_start, lon)
-    lon2 = em.find_closest_val(lon_end, lon)
+    ax.set_extent((lon_min, lon_max, lat_min, lat_max))
+    ax.set_xticks(lon[math.ceil(lon_min / 10) * 10:lon_max][::10], crs = ccrs.PlateCarree())
+    ax.set_yticks(lat[math.ceil(lat1 / 10) * 10:lat2][::10], crs = ccrs.PlateCarree())
+    plt.xlabel('lon')
+    plt.ylabel('lat')
+    plt.title(title)
     
-    fig = plt.figure(figsize = (12,4))
-    ax = plt.subplot(projection = ccrs.PlateCarree())
-
+    color = np.hypot(x_data[lat1:lat2, lon_min:lon_max][::detail, ::detail], 
+                     y_data[lat1:lat2, lon_min:lon_max][::detail, ::detail])
+    v_field = plt.quiver(lon[lon_min:lon_max][::detail], 
+                          lat[lat1:lat2][::detail],
+                        x_data[lat1:lat2, lon_min:lon_max][::detail, ::detail],
+                        y_data[lat1:lat2, lon_min:lon_max][::detail, ::detail], color, cmap="GnBu", scale = v_scale)
+    scalebar = plt.colorbar(v_field)
+    scalebar.set_label(scale_title)
+    
+    
+#This is a basic method to plot a given collection of vector data (with the x and y componenets given separately) along with associated
+#lat and lon values. Optional parameters to limit bounds of visualization, and, since these plot can get
+#messy, how many degrees should separate the vectors. This plots the data as unit vectors colored corresponding to their magnitude. 
+#It is reccomended that this is used to visualizing vector data compared to plot_vector_data
+def plot_nvector_data(lon, lat, x_data, y_data, title, scale_title, 
+                     lon_min = 0, lon_max = 359, lat_min = -90, lat_max = 90, detail=1):
+    fig = plt.figure(figsize = (20, 15))
+    ax = plt.axes(projection = ccrs.PlateCarree(central_longitude = 0))
     ax.coastlines()
-
-    ax.add_feature(cartopy.feature.RIVERS)
-    ax.add_feature(cartopy.feature.BORDERS, linestyle=':')
-
-
-    ax.set_xticks(np.asarray(lon[::5]) - 180)
-    ax.set_yticks(np.asarray(lat[::4]))
-    ax.set_xlabel('lon')
-    ax.set_ylabel('lat')
-    if max_at_one: 
-        mesh = plt.pcolormesh(lon[lon1:lon2], lat[lat1:lat2], data_package['sst'][lat1:lat2, lon1:lon2],
-                        cmap = 'coolwarm', vmin = -1, vmax = 1)
-    else: 
-        mesh = plt.pcolormesh(lon[lon1:lon2], lat[lat1:lat2], data_package['sst'][lat1:lat2, lon1:lon2],
-                        cmap = 'coolwarm')  
-    cb = plt.colorbar(mesh)
-    # ax.clabel(cont, inline=1, fontsize=5, colors = 'black')
-    cb.set_label('stdev from mean')
+    ax.add_feature(cartopy.feature.LAKES, alpha=1)
+    ax.add_feature(cartopy.feature.RIVERS, alpha=1)
     
-    ax.set_title(title_str)
+    lat1 = em.find_closest_val(lat_min, lat)
+    lat2 = em.find_closest_val(lat_max, lat)
     
-    return fig 
-
-def plot_poi():
-    plt.figure()
-    ax = plt.subplot(projection = ccrs.PlateCarree())
-    ax.coastlines()
-    path1 = r'D:\Shapefiles\msrivs\msrivs.shp'
-    shp1 = gpd.read_file(path1)
-    shp1.plot(ax=ax, edgecolor='cornflowerblue', linewidth = 2)
-    plt.scatter(-91.438585, 38.708687, c = 'black')
-    plt.scatter(-85.741164, 38.262327, c = 'black')
-    plt.text(-94, 39.5, 'Hermann')
-    plt.text(-87, 39, 'Louisville')
-    gl = ax.gridlines(draw_labels = True)
-    gl.xlabels_top = False
-    gl.ylabels_right = False
-    ax.add_feature(cartopy.feature.OCEAN)
-    ax.add_feature(cartopy.feature.LAKES)
-    ax.add_feature(cartopy.feature.BORDERS)
-    plt.title('Locations of Flood Gauges')
+    ax.set_extent((lon_min, lon_max, lat_min, lat_max))
+    ax.set_xticks(lon[math.ceil(lon_min / 10) * 10:lon_max][::10], crs = ccrs.PlateCarree())
+    ax.set_yticks(lat[math.ceil(lat1 / 10) * 10:lat2][::10], crs = ccrs.PlateCarree())
+    plt.xlabel('lon')
+    plt.ylabel('lat')
+    plt.title(title)
+    
+    color = np.hypot(x_data[lat1:lat2, lon_min:lon_max][::detail, ::detail], 
+                     y_data[lat1:lat2, lon_min:lon_max][::detail, ::detail])
+    v_field = plt.quiver(lon[lon_min:lon_max][::detail], 
+                          lat[lat1:lat2][::detail],
+                        np.divide(x_data[lat1:lat2, lon_min:lon_max][::detail, ::detail], color),
+                        np.divide(y_data[lat1:lat2, lon_min:lon_max][::detail, ::detail], color), 
+                         color, cmap="GnBu", scale = 125)
+    scalebar = plt.colorbar(v_field)
+    scalebar.set_label(scale_title)
+    
+    

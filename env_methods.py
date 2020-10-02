@@ -4,7 +4,7 @@ Created on Wed Feb 26 10:25:25 2020
 Data from https://www.esrl.noaa.gov/psd/data/gridded/data.20thC_ReanV2c.pressure.html
 @author: bydd1
 
-This Code was written by Brynnydd Hamilton and was copied into this project
+The code below was written by Brynnydd Hamilton (https://github.com/b-r-hamilton/miss-atmo) and was copied into this project
 with her permission
 """
 import os 

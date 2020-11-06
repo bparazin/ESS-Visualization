@@ -20,10 +20,14 @@ def plot_data(lon, lat, data, scalebar, title, lon_min = 0, lon_max = 359, lat_m
     #The latitudes break because of how they're set up in the NOAA renalysis data unless you do this
     lat1 = em.find_closest_val(lat_min, lat)
     lat2 = em.find_closest_val(lat_max, lat)
+    lon1 = em.find_closest_val(lon_min, lon)
+    lon2 = em.find_closest_val(lon_max, lon)
+    print(lat1)
+    print(lat2)
     
     #label axes and the graph
     ax.set_extent((lon_min, lon_max, lat_min, lat_max))
-    ax.set_xticks(lon[math.ceil(lon_min / 10) * 10:lon_max][::10], crs = ccrs.PlateCarree())
+    ax.set_xticks(lon[math.ceil(lon1 / 10) * 10:lon2][::10], crs = ccrs.PlateCarree())
     ax.set_yticks(lat[math.ceil(lat1 / 10) * 10:lat2][::10], crs = ccrs.PlateCarree())
     plt.xlabel('lon')
     plt.ylabel('lat')
@@ -31,14 +35,14 @@ def plot_data(lon, lat, data, scalebar, title, lon_min = 0, lon_max = 359, lat_m
     
     #
     if not has_scale_bounds:
-        mesh = plt.pcolormesh(lon[lon_min:lon_max], 
+        mesh = plt.pcolormesh(lon[lon1:lon2], 
                               lat[lat1:lat2], 
-                              data[lat1:lat2, lon_min:lon_max], 
+                              data[lat1:lat2, lon1:lon2], 
                               cmap=colormap)
     else:
-        mesh = plt.pcolormesh(lon[lon_min:lon_max], 
+        mesh = plt.pcolormesh(lon[lon1:lon2], 
                               lat[lat1:lat2], 
-                              data[lat1:lat2, lon_min:lon_max], 
+                              data[lat1:lat2, lon1:lon2], 
                               cmap=colormap, vmin = scale_min, vmax = scale_max)
     cbar = plt.colorbar(mesh)
     cbar.set_label(scalebar)

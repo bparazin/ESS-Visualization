@@ -9,13 +9,13 @@ import math
 
 #This is a basic method to plot a given 2d numpy array of scalar data, along with it's associated latitude and longitude values.
 #Optional parameters to limit the visualization to a rectangle with minimum and maximum longitude and latitude values
-def plot_data(lon, lat, data, scalebar, title, lon_min = 0, lon_max = 359, lat_min = -90, lat_max = 90, has_scale_bounds = False, scale_min = 0, scale_max = 0, figsize_x = 20, figsize_y = 15, colormap = "coolwarm"): 
+def plot_data(lon, lat, data, scalebar, title, lon_min = 0, lon_max = 359, lat_min = -90, lat_max = 90, has_scale_bounds = False, scale_min = 0, scale_max = 0, figsize_x = 20, figsize_y = 15, colormap = "coolwarm", has_rivers = True): 
     #make the figure
     fig = plt.figure(figsize = (figsize_x, figsize_y))
     ax = plt.axes(projection = ccrs.PlateCarree(central_longitude = 0))
     ax.coastlines()
     ax.add_feature(cartopy.feature.LAKES, alpha=1)
-    ax.add_feature(cartopy.feature.RIVERS, alpha = 1)
+    if has_rivers: ax.add_feature(cartopy.feature.RIVERS, alpha = 1)
     
     #The latitudes break because of how they're set up in the NOAA renalysis data unless you do this
     lat1 = em.find_closest_val(lat_min, lat)
